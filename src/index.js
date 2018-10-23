@@ -21,6 +21,8 @@ class Board extends React.Component {
     }
   }
 
+  winner = null;
+
   componentDidUpdate(prevProps, prevState) {
     if (JSON.stringify(this.state.squares) !== JSON.stringify(prevState.squares)) {
       this.props.onBoardChange();
@@ -32,15 +34,15 @@ class Board extends React.Component {
   }
 
   onSquareClick(i) {
-    this.setState((state, props) => {
-      const copiedSquares = state.squares.slice();
+    if (!this.winner) {
+      const copiedSquares = this.state.squares.slice();
 
       if (copiedSquares[i] === null) {
         copiedSquares[i] = this.props.content;
-        return {squares : copiedSquares};
+        this.winner = this.calculateWinner(copiedSquares);
+        this.setState({squares : copiedSquares});
       }
-      return null;
-    })
+    }
   }
 
   calculateWinner(squares) {
@@ -64,12 +66,9 @@ class Board extends React.Component {
   }
 
   render() {
-
-    const winner = this.calculateWinner(this.state.squares);
-
     let status;
-    if (winner) {
-      status = 'Winner: ' + winner;
+    if (this.winner) {
+      status = 'Winner: ' + this.winner;
     } else {
       status = 'Next player: ' + this.props.content;
     }
