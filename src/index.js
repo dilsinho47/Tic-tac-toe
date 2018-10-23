@@ -4,13 +4,9 @@ import './index.css';
 
 class Square extends React.Component {
 
-  handleClick() {
-    this.props.onSquareClick();
-  }
-
   render() {
     return (
-      <button className="square" onClick={() => this.handleClick()}>
+      <button className="square" onClick={() => this.props.onSquareClick()}>
         {this.props.value}
       </button>
     );
@@ -18,11 +14,16 @@ class Square extends React.Component {
 }
 
 class Board extends React.Component {
-
   constructor(props) {
     super(props);
     this.state = {
       squares : Array(9).fill(null),
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (JSON.stringify(this.state.squares) !== JSON.stringify(prevState.squares)) {
+      this.props.onBoardChange();
     }
   }
 
@@ -32,16 +33,47 @@ class Board extends React.Component {
 
   onSquareClick(i) {
     this.setState((state, props) => {
-      const newSquares = state.squares.slice();
-      newSquares[i] = this.props.content;
-      return {squares : newSquares};
+      const copiedSquares = state.squares.slice();
+
+      if (copiedSquares[i] === null) {
+        copiedSquares[i] = this.props.content;
+        return {squares : copiedSquares};
+      }
+      return null;
     })
-    this.props.onBoardChange();
+  }
+
+  calculateWinner(squares) {
+    const lines = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
+    for (let i = 0; i < lines.length; i++) {
+      const [a, b, c] = lines[i];
+      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+        return squares[a];
+      }
+    }
+    return null;
   }
 
   render() {
-    const status = 'Next player: ' + this.props.content;
 
+    const winner = this.calculateWinner(this.state.squares);
+
+    let status;
+    if (winner) {
+      status = 'Winner: ' + winner;
+    } else {
+      status = 'Next player: ' + this.props.content;
+    }
+    
     return (
       <div>
         <div className="status">{status}</div>
@@ -87,7 +119,7 @@ class Game extends React.Component {
 
   render() {
     let nextPlayer;
-    if (this.state.turn % 2 == 0) {
+    if (this.state.turn % 2 === 0) {
       nextPlayer = this.players.O;
     } else {
       nextPlayer = this.players.X;
